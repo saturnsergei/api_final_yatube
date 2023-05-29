@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-
-from posts.models import Comment, Post, Group, Follow
+from rest_framework.validators import UniqueTogetherValidator
+from posts import models
 
 User = get_user_model()
 
@@ -25,13 +25,13 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = '__all__'
-        model = Post
+        model = models.Post
 
 
 class GroupSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Group
+        model = models.Group
         fields = '__all__'
 
 
@@ -43,12 +43,13 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = '__all__'
-        model = Comment
+        model = models.Comment
 
 
 class FollowSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(
-        read_only=True, slug_field='username'
+        read_only=True, slug_field='username',
+        default=serializers.CurrentUserDefault()
     )
     following = serializers.SlugRelatedField(
         slug_field='username',
@@ -56,20 +57,17 @@ class FollowSerializer(serializers.ModelSerializer):
     )
 
     def validate_following(self, data):
-
         if self.context.get('request').user == data:
             raise serializers.ValidationError('Нельзя подписаться на себя')
-
-        following = Follow.objects.filter(
-            user=self.context.get('request').user,
-            following=data
-        ).exists()
-
-        if following:
-            raise serializers.ValidationError('Вы уже подписаны на автора')
-
         return data
 
     class Meta:
         fields = '__all__'
-        model = Follow
+        model = models.Follow
+        validators = [
+            UniqueTogetherValidator(
+                queryset=models.Follow.objects.all(),
+                fields=['user', 'following'],
+                message='Вы уже подписаны на автора'
+            )
+        ]
