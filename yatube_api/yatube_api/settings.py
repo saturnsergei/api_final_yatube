@@ -1,15 +1,16 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
-from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET_KEY = os.getenv('SECRET_KEY', "")
+DEBUG = os.getenv('DEBUG', True)
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', [])
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = 'hhz7l-ltdismtf@bzyz+rple7*s*w$jak%whj@(@u0eok^f9k4'
-
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
